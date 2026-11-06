@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIDORA - Lowest Unique Bid Auction</title>
+<meta name="description" content="BIDORA is a Lowest Unique Bid Auction platform in Ethiopia. Bid low, win big with unique bid strategies!">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          gold: '#EAB308',
+          goldDark: '#CA8A04',
+          goldLight: '#FDE047',
+          amberCustom: '#D97706',
+          navy: '#1E3A8A',
+          navyDark: '#0B0F19',
+          cardDark: '#111827'
+        }
+      }
+    }
+  }
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(156,163,175,.3); border-radius: 3px; }
+  .glow-gold { box-shadow: 0 0 25px rgba(217,119,6,.35); transition: box-shadow .3s ease, transform .2s ease; }
+  .glow-gold:hover { box-shadow: 0 0 35px rgba(217,119,6,.55); transform: translateY(-1px); }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-[#0B0F19] dark:text-white min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-white transition-colors duration-300">
+
+<div id="toast-notification" aria-live="polite" class="fixed top-6 inset-x-0 mx-auto max-w-sm z-[100] hidden bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl border border-amber-500/50 flex items-center space-x-3">
+  <i id="toast-icon" class="fa-solid fa-circle-check text-2xl text-amber-500"></i>
+  <div class="flex-grow text-xs min-w-0">
+    <p id="toast-title" class="font-bold text-sm truncate">Notification</p>
+    <p id="toast-message" class="text-slate-300 break-words">Message text</p>
+  </div>
+  <button onclick="dismissToast()" class="text-slate-400 hover:text-white p-1" aria-label="Close notification"><i class="fa-solid fa-xmark"></i></button>
+</div>
+
+<header class="sticky top-0 z-40 w-full backdrop-blur-md bg-white/80 dark:bg-[#0B0F19]/80 border-b border-gray-200 dark:border-gray-800/80 transition-colors duration-300">
+  <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+    <button onclick="navigateTo('home')" class="flex items-center space-x-0.5 text-left focus:outline-none" aria-label="BIDORA Home">
+      <span class="text-xl font-black tracking-wider text-amber-500">BID</span>
+      <span class="text-xl font-black tracking-wider text-[#1E3A8A] dark:text-blue-500">ORA</span>
+    </button>
+    <div class="flex items-center space-x-3">
+      <div class="relative inline-block text-left">
+        <button id="lang-btn" onclick="toggleLangDropdown()" aria-label="Select Language" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/60 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+          <i class="fa-solid fa-globe text-gray-500 dark:text-gray-400"></i><span id="current-lang">EN</span>
+        </button>
+        <div id="lang-dropdown" class="hidden absolute right-0 mt-2 w-28 rounded-xl shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
+          <div class="py-1">
+            <button onclick="setLang('EN')" class="block w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">English (EN)</button>
+            <button onclick="setLang('AM')" class="block w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">አማርኛ (AM)</button>
+          </div>
+        </div>
+      </div>
+      <button id="header-admin-btn" onclick="navigateTo('admin')" title="Admin Dashboard" aria-label="Admin Dashboard" class="hidden p-1.5 rounded-lg border border-amber-500/50 bg-amber-500/10 text-xs text-amber-500 hover:bg-amber-500/20 transition">
+        <i class="fa-solid fa-user-shield text-sm"></i>
+      </button>
+      <button id="theme-switch-btn" onclick="toggleTheme()" role="switch" aria-checked="true" aria-label="Toggle Color Theme" class="relative inline-flex h-7 w-[52px] flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-300 dark:bg-gray-800 transition-colors duration-200 ease-in-out focus:outline-none">
+        <span id="theme-toggle-dot" class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white dark:bg-gray-900 shadow ring-0 transition duration-200 ease-in-out flex items-center justify-center text-xs">
+          <i id="theme-icon" class="fa-solid fa-moon text-amber-400"></i>
+        </span>
+      </button>
+      <button onclick="toggleSideMenu()" class="p-1 focus:outline-none group" aria-label="Toggle Navigation Menu">
+        <div class="flex flex-col items-end space-y-1 w-6">
+          <span class="h-1 w-full bg-slate-800 dark:bg-slate-200 rounded-full"></span>
+          <span class="h-1 w-full bg-slate-800 dark:bg-slate-200 rounded-full"></span>
+          <span class="h-1 w-full bg-slate-800 dark:bg-slate-200 rounded-full"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="side-menu-drawer" class="fixed inset-0 z-50 hidden">
+  <div onclick="toggleSideMenu()" class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
+  <div class="fixed top-0 right-0 bottom-0 w-80 bg-white dark:bg-[#0B0F19] border-l border-gray-200 dark:border-gray-800 p-6 shadow-2xl flex flex-col justify-between z-10 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Navigation Menu">
+    <div class="space-y-6">
+      <div class="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-gray-800">
+        <div class="flex"><span class="text-lg font-black text-amber-500">BID</span><span class="text-lg font-black text-[#1E3A8A] dark:text-blue-500">ORA</span></div>
+        <button onclick="toggleSideMenu()" class="text-gray-400 p-1" aria-label="Close Navigation Menu"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div id="drawer-profile-card" class="bg-gray-50 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800/80 rounded-2xl p-4 flex items-center space-x-3.5">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-600 via-pink-500 to-rose-400 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-user text-white text-xl"></i></div>
+        <div class="h-9 w-px bg-slate-300 dark:bg-slate-700"></div>
+        <div class="flex-grow min-w-0">
+          <h4 id="profile-name" class="text-base font-extrabold truncate">Guest User</h4>
+          <p id="profile-phone" class="text-sm font-bold text-blue-600 font-mono">Not logged in</p>
+        </div>
+      </div>
+      <nav class="space-y-2">
+        <button onclick="toggleSideMenu(); navigateTo('home')" class="w-full flex items-center space-x-3.5 px-3.5 py-3 rounded-xl text-left text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition"><i class="fa-solid fa-house text-amber-500 w-5"></i><span>Home</span></button>
+        <button onclick="toggleSideMenu(); openMyBidsView()" class="w-full flex items-center space-x-3.5 px-3.5 py-3 rounded-xl text-left text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition"><i class="fa-solid fa-receipt text-amber-500 w-5"></i><span>My bids</span></button>
+        <button id="admin-menu-btn" onclick="toggleSideMenu(); navigateTo('admin')" aria-label="Admin Dashboard" class="hidden w-full flex items-center space-x-3.5 px-3.5 py-3 rounded-xl text-left text-sm font-bold bg-amber-500/10 text-amber-500 border border-amber-500/30">
+          <i class="fa-solid fa-user-shield w-5"></i><span>Admin Panel (0969771141)</span>
+        </button>
+        <button onclick="toggleSideMenu(); navigateTo('privacy-policy')" class="w-full flex items-center space-x-3.5 px-3.5 py-3 rounded-xl text-left text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition"><i class="fa-solid fa-shield-cat text-amber-500 w-5"></i><span>Privacy Policy</span></button>
+        <button onclick="toggleSideMenu(); navigateTo('terms')" class="w-full flex items-center space-x-3.5 px-3.5 py-3 rounded-xl text-left text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition"><i class="fa-solid fa-file-contract text-amber-500 w-5"></i><span>Terms of Service</span></button>
+        <button onclick="toggleSideMenu(); handleAuthAction()" class="w-full flex items-center space-x-3.5 px-3.5 py-3 rounded-xl text-left text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition"><i id="drawer-auth-icon" class="fa-solid fa-arrow-right-to-bracket text-amber-500 w-5"></i><span id="drawer-auth-text">Sign In / Register</span></button>
+      </nav>
+    </div>
+    <div class="pt-4 border-t border-gray-200 dark:border-gray-800 text-xs text-gray-500 space-y-1">
+      <p>BIDORA Production v3.0</p>
+    </div>
+  </div>
+</div>
+
+<main class="max-w-md mx-auto w-full px-4 py-6 flex-grow flex flex-col justify-center">
+  <section id="view-home" class="view-screen space-y-6">
+    <div class="text-left space-y-3">
+      <h1 id="i18n-hero-title" class="text-3xl sm:text-4xl font-extrabold tracking-tight uppercase">BID <span class="text-amber-600 dark:text-amber-400">LOW</span>, WIN <span class="text-amber-600 dark:text-amber-400">MORE</span>.</h1>
+      <p id="i18n-hero-desc" class="text-xs sm:text-sm text-slate-700 dark:text-gray-300 leading-relaxed font-medium">BIDORA is a Lowest Unique Bid Auction where the participant who submits the lowest unique bid wins. For instance, if ETB 1.00 is submitted twice, ETB 2.00 once, ETB 3.00 twice, and ETB 4.00 once, the lowest unique bid is ETB 2.00, so it wins.</p>
+    </div>
+    <button id="i18n-cta-btn" onclick="openAuthModal()" class="w-full py-3.5 px-6 rounded-xl font-bold text-sm tracking-wider uppercase text-white bg-gradient-to-r from-indigo-900 via-blue-900 to-indigo-950 border border-indigo-700/50 shadow-lg hover:opacity-95 active:scale-95 transition">START BIDDING NOW</button>
+    <div class="bg-gray-200 dark:bg-gray-900/80 p-1 rounded-xl flex space-x-1 border border-gray-300 dark:border-gray-800">
+      <button onclick="switchTab('live')" id="tab-live" class="flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white">Live</button>
+      <button onclick="switchTab('ended')" id="tab-ended" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-600 dark:text-gray-400">Ended</button>
+    </div>
+    <div id="live-auctions-container" class="space-y-6"></div>
+    <div id="ended-auctions-container" class="hidden space-y-6"></div>
+  </section>
+
+  <section id="view-auction" class="view-screen hidden space-y-5">
+    <button onclick="navigateTo('home')" class="flex items-center space-x-2 text-xs font-bold text-gray-600 dark:text-gray-400"><i class="fa-solid fa-arrow-left"></i><span id="i18n-back-btn-1">Back to Auctions</span></button>
+    <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111827] overflow-hidden shadow-2xl">
+      <div class="relative h-56 w-full bg-slate-900">
+        <img id="detail-auction-img" src="https://images.unsplash.com/photo-1580519542036-c47de6196ba5?auto=format&fit=crop&w=800&q=80" alt="Prize" class="w-full h-full object-cover">
+        <div id="detail-status-badge" class="absolute top-3 right-3 bg-green-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-full"><span class="animate-pulse">●</span> LIVE</div>
+      </div>
+      <div class="p-5 space-y-6">
+        <div>
+          <h1 id="detail-auction-title" class="text-2xl font-black">10,000 Birr prize</h1>
+          <div class="grid grid-cols-2 gap-4 my-4 py-3 border-y border-gray-200 dark:border-gray-800 text-center items-center">
+            <div class="border-r border-gray-200 dark:border-gray-800">
+              <span id="detail-price-per-bid" class="text-sm sm:text-base font-extrabold">50.00 Birr/bid</span>
+            </div>
+            <div>
+              <span id="detail-user-bid-capacity" class="text-sm sm:text-base font-extrabold text-amber-500">0 bids</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <span class="text-[11px] font-bold tracking-wider text-gray-400 uppercase">TIME REMAINING</span>
+          <div class="grid grid-cols-4 gap-2 text-center mt-2" id="detail-countdown-container">
+            <div class="bg-gray-100 dark:bg-gray-900 p-2.5 rounded-xl"><span id="cd-detail-days" class="block text-xl font-extrabold font-mono">00</span><span class="text-[9px]">DAYS</span></div>
+            <div class="bg-gray-100 dark:bg-gray-900 p-2.5 rounded-xl"><span id="cd-detail-hours" class="block text-xl font-extrabold font-mono">00</span><span class="text-[9px]">HRS</span></div>
+            <div class="bg-gray-100 dark:bg-gray-900 p-2.5 rounded-xl"><span id="cd-detail-mins" class="block text-xl font-extrabold font-mono">00</span><span class="text-[9px]">MIN</span></div>
+            <div class="bg-gray-100 dark:bg-gray-900 p-2.5 rounded-xl"><span id="cd-detail-secs" class="block text-xl font-extrabold font-mono">00</span><span class="text-[9px]">SEC</span></div>
+          </div>
+        </div>
+        <div class="space-y-2.5">
+          <div class="flex justify-between items-center">
+            <label id="i18n-tickets-label" class="text-sm font-semibold">How many tickets?</label>
+            <span id="free-ticket-badge" class="hidden text-[11px] font-extrabold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">10th Ticket FREE!</span>
+          </div>
+          <div class="grid grid-cols-5 gap-2" id="ticket-buttons-container"></div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex justify-between items-center">
+            <label id="i18n-unique-bids-label" class="text-sm font-semibold">Your unique bids (ETB)</label>
+            <span id="ticket-count-label" class="text-xs font-bold text-amber-500">1 Field</span>
+          </div>
+          <p class="text-[11px] text-gray-500">0.01 increments minimum 1.00 ETB per bid box</p>
+          <div id="dynamic-bids-container" class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1"></div>
+        </div>
+        <div class="space-y-3">
+          <label id="i18n-payment-method-label" class="block text-sm font-semibold">Payment method</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" onclick="selectPayment('telebirr')" id="pay-telebirr" class="py-4 px-4 rounded-2xl border-2 border-indigo-500 bg-gray-50 dark:bg-gray-900 flex items-center justify-center space-x-2.5">
+              <span class="w-6 h-6 rounded-md bg-sky-500 text-white flex items-center justify-center font-extrabold text-[10px]">tele</span>
+              <span class="font-extrabold text-sm sm:text-base">Telebirr</span>
+            </button>
+            <button type="button" onclick="selectPayment('cbe')" id="pay-cbe" class="py-4 px-4 rounded-2xl border border-gray-300 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex items-center justify-center space-x-2.5">
+              <span class="w-6 h-6 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-[10px]">CBE</span>
+              <span class="font-extrabold text-sm sm:text-base">CBE Birr</span>
+            </button>
+          </div>
+        </div>
+        <div class="space-y-1.5">
+          <label id="i18n-payment-phone-label" class="block text-sm font-semibold">Payment phone</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400"><i class="fa-solid fa-phone text-sm"></i></span>
+            <input type="tel" id="payment-phone" inputmode="numeric" placeholder="09XXXXXXXX" class="w-full pl-11 pr-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 font-medium text-base focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+        <button onclick="handleBidSubmit()" id="submit-bid-btn" class="w-full py-4 px-6 rounded-full font-black text-base text-slate-950 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 glow-gold active:scale-95 transition-transform">
+          <span>Submit a Bid ETB <span id="total-price-tag">50.00</span></span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-ended-detail" class="view-screen hidden space-y-4">
+    <button onclick="navigateTo('home')" class="flex items-center space-x-2 text-xs font-bold text-gray-600 dark:text-gray-400"><i class="fa-solid fa-arrow-left"></i><span id="i18n-back-btn-2">Back to Auctions</span></button>
+    <div class="bg-[#0b101d] p-4 sm:p-5 rounded-3xl border border-slate-800 shadow-2xl space-y-4">
+      <div class="bg-[#0e1626] border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+            <i class="fa-solid fa-check text-slate-950 text-xl font-black"></i>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black text-white">Auction <span class="text-emerald-400">Ended At</span></h2>
+        </div>
+        <div class="bg-[#0b101c] border border-slate-800 rounded-xl p-3 space-y-2.5">
+          <div class="flex items-center justify-between text-slate-200 text-xs sm:text-sm font-semibold border-b border-slate-800/80 pb-2">
+            <div class="flex items-center space-x-2">
+              <i class="fa-regular fa-calendar text-slate-400 w-4"></i>
+              <span id="ended-date-en">Oct 30, 2026</span>
+            </div>
+            <div class="h-4 w-px bg-slate-800 mx-2"></div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-regular fa-clock text-slate-400 w-4"></i>
+              <span id="ended-time-en">10:30:00 PM</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-slate-200 text-xs sm:text-sm font-semibold pt-0.5">
+            <div class="flex items-center space-x-2">
+              <i class="fa-regular fa-calendar text-slate-400 w-4"></i>
+              <span id="ended-date-et">ጥቅምት 20, 2019 E.C.</span>
+            </div>
+            <div class="h-4 w-px bg-slate-800 mx-2"></div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-regular fa-clock text-slate-400 w-4"></i>
+              <span id="ended-time-et">22:30:00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-[#0e1626] border border-slate-800 rounded-2xl p-3.5 space-y-1">
+          <div class="flex items-center justify-between text-slate-400">
+            <i class="fa-solid fa-gavel text-slate-400 text-base"></i>
+          </div>
+          <span id="ended-total-bids" class="block text-2xl font-black text-white">0</span>
+          <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">TOTAL BIDS</span>
+        </div>
+        <div class="bg-[#0e1626] border border-slate-800 rounded-2xl p-3.5 space-y-1">
+          <div class="flex items-center justify-between text-slate-400">
+            <i class="fa-solid fa-copy text-slate-400 text-base"></i>
+          </div>
+          <span id="ended-duplicate-bids" class="block text-2xl font-black text-white">0</span>
+          <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">DUPLICATE BIDS</span>
+        </div>
+        <div class="bg-[#0e1626] border border-slate-800 rounded-2xl p-3.5 space-y-1">
+          <div class="flex items-center justify-between text-slate-400">
+            <i class="fa-solid fa-users text-slate-400 text-base"></i>
+          </div>
+          <span id="ended-unique-bids" class="block text-2xl font-black text-white">0</span>
+          <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">UNIQUE BIDS</span>
+        </div>
+        <div class="bg-[#0e1626] border border-slate-800 rounded-2xl p-3.5 space-y-1">
+          <div class="flex items-center justify-between text-amber-400">
+            <i class="fa-solid fa-trophy text-amber-400 text-base"></i>
+          </div>
+          <span id="ended-winning-bid" class="block text-2xl font-black text-amber-400">-</span>
+          <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">WINNING BID</span>
+        </div>
+      </div>
+      <div class="bg-[#0e1626] border-2 border-amber-500/90 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-3.5">
+          <i class="fa-solid fa-crown text-amber-400 text-3xl flex-shrink-0"></i>
+          <div>
+            <span class="block text-[11px] font-extrabold text-amber-400 uppercase tracking-wider">WINNER</span>
+            <h3 id="ended-winner-name" class="text-xl font-black text-white">Dawit</h3>
+            <span id="ended-winner-phone" class="text-xs text-slate-400 font-mono">0956****72</span>
+          </div>
+        </div>
+        <div id="ended-winning-badge" class="bg-amber-400 text-slate-950 font-black text-base sm:text-lg px-4 py-2 rounded-full shadow">8.46 Br</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-my-bids" class="view-screen hidden space-y-4">
+    <button onclick="navigateTo('home')" class="flex items-center space-x-2 text-xs font-bold text-gray-600 dark:text-gray-400"><i class="fa-solid fa-arrow-left"></i><span>Back to Home</span></button>
+    <div class="bg-white dark:bg-[#111827] rounded-3xl p-4 sm:p-5 border border-gray-200 dark:border-gray-800 shadow-xl space-y-4">
+      <div class="flex items-center space-x-3">
+        <i class="fa-solid fa-gavel text-indigo-900 dark:text-indigo-400 text-2xl"></i>
+        <h2 class="text-2xl font-black">Bids</h2>
+      </div>
+      <div class="bg-indigo-50 dark:bg-gray-900 p-1 rounded-2xl flex border border-indigo-100 dark:border-gray-800">
+        <button id="mybids-tab-current" onclick="switchMyBidsTab('current')" class="flex-1 py-2.5 text-sm font-extrabold rounded-xl bg-white dark:bg-gray-800">Current</button>
+        <button id="mybids-tab-history" onclick="switchMyBidsTab('history')" class="flex-1 py-2.5 text-sm font-extrabold rounded-xl">History</button>
+      </div>
+      <div id="mybids-content-current" class="space-y-3"></div>
+      <div id="mybids-content-history" class="hidden space-y-3"></div>
+    </div>
+  </section>
+
+  <section id="view-privacy-policy" class="view-screen hidden space-y-4">
+    <button onclick="navigateTo('home')" class="flex items-center space-x-2 text-xs font-bold text-gray-600 dark:text-gray-400"><i class="fa-solid fa-arrow-left"></i><span>Back to Home</span></button>
+    <div class="bg-white dark:bg-[#111827] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 shadow-xl space-y-5 text-left text-xs sm:text-sm leading-relaxed">
+      <h1 class="text-2xl font-black text-amber-500 pb-2 border-b border-gray-200 dark:border-gray-800">BIDORA Privacy Policy</h1>
+      <div class="space-y-4 text-slate-700 dark:text-slate-300">
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">1. Overview</h3>
+          <p>BIDORA is a lowest-unique-bid auction platform. You pay a small flat fee per bid, and the lowest unique bid at auction close wins the prize. We use your personal data to run accounts, auctions, payments, and support — and to prevent fraud and meet the law.</p>
+          <p class="mt-2 font-semibold">Key points:</p>
+          <ul class="list-disc pl-5 space-y-1 mt-1">
+            <li>We use your phone number with a one-time SMS code via SMS Ethiopia to protect your account.</li>
+            <li>We never see your mobile-money PIN. Payments go through Chapa and your chosen mobile-money provider.</li>
+            <li>Other bidders never see your phone number or bid amounts.</li>
+            <li>We do not sell your data or use it for third-party advertising.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">2. Data we collect</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>Account:</strong> phone number, display name, language preference, verification and sign-in records, device and IP information for security.</li>
+            <li><strong>Bidding:</strong> bid amounts, prizes, times, bid status, collision events, auction results, and support messages.</li>
+            <li><strong>Payments:</strong> payment method, payer phone number, fees, transaction references, and a transaction ledger. We never store your mobile-money PIN or full card details.</li>
+            <li><strong>Notifications:</strong> push tokens, device details, SMS delivery records, and service messages.</li>
+            <li><strong>Technical/security:</strong> IP address, device and app info, logs, and audit records. We do not collect precise location or use advertising trackers.</li>
+            <li><strong>Permissions:</strong> we ask for notification permission where needed. You can change this in device settings.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">3. How we collect data</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Directly from you (registration, bidding, payment, support).</li>
+            <li>Automatically from your device and use of the app.</li>
+            <li>From service providers (payments, SMS, notifications, storage).</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">4. Why we use your data</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Create, secure, and manage your account.</li>
+            <li>Verify your phone number.</li>
+            <li>Run auctions, detect collisions, and determine winners.</li>
+            <li>Process bid fees and winner payments, and handle refunds and disputes.</li>
+            <li>Send one-time codes and service notifications.</li>
+            <li>Provide support and resolve complaints.</li>
+            <li>Prevent fraud, enforce rules, and keep the platform safe.</li>
+            <li>Fix errors, improve reliability, and keep business and audit records.</li>
+            <li>Comply with the law and lawful requests.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">5. Legal grounds</h3>
+          <p>We process data because it is: necessary to perform our contract with you, based on your consent (including app permissions), required by law, or needed for legitimate interests such as security, fraud prevention, and service reliability — where your rights are not overridden.</p>
+          <p class="mt-1">You may withdraw consent at any time, but this does not affect processing already done lawfully. Some features cannot work without certain data.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">6. What other users see</h3>
+          <p>During an auction, others see only aggregate activity (e.g., number of bidders and bid events) — never your phone number or individual bids.</p>
+          <p class="mt-1">After an auction, the winner's display name and winning amount may be shown. Choose a display name you are comfortable sharing publicly. You can change it anytime.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">7. When we share data</h3>
+          <p>We share data only with service providers who host, store, send messages, process payments, or help secure the platform; professional advisers and auditors; authorities when required by law; or a successor in a business merger. We do not allow providers to use your data for advertising.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">8. Service providers</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Chapa and your mobile-money provider — payments.</li>
+            <li>SMS Ethiopia — SMS and one-time codes.</li>
+            <li>Google Firebase Cloud Messaging — push notifications.</li>
+            <li>Cloud storage — auction images.</li>
+            <li>Hosting, database, networking, and security providers — running BIDORA.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">9. Storage and international processing</h3>
+          <p>BIDORA is based in Ethiopia, but some providers operate infrastructure abroad. Your data may therefore be processed outside Ethiopia, where privacy rules may differ. We handle cross-border transfers in line with applicable requirements.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">10. Retention</h3>
+          <p>We keep personal data only as long as needed to run auctions, process payments, provide support, keep tax/accounting records, preserve auction integrity, and comply with law. When no longer needed, data is deleted or anonymised.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">11. Security</h3>
+          <p>We use reasonable technical and organisational safeguards (encryption, access controls, backups). You are responsible for protecting your phone, one-time codes, and account.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">12. Your rights</h3>
+          <p>You may request access to data, correct inaccurate data, object to processing, withdraw consent, or complain to the competent Ethiopian data-protection authority.</p>
+        </div>
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">13. Children</h3>
+          <p>The Services are for people aged 18 or older. If we learn a child created an account, we will close it and delete the data, subject to law.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-terms" class="view-screen hidden space-y-4">
+    <button onclick="navigateTo('home')" class="flex items-center space-x-2 text-xs font-bold text-gray-600 dark:text-gray-400"><i class="fa-solid fa-arrow-left"></i><span>Back to Home</span></button>
+    <div class="bg-white dark:bg-[#111827] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 shadow-xl space-y-4 text-left text-xs sm:text-sm">
+      <h1 class="text-2xl font-black text-amber-500 border-b border-gray-200 dark:border-gray-800 pb-2">Terms of Service</h1>
+      <p class="text-gray-500 italic">Welcome to BIDORA. By using our platform, you agree to abide by our fair play bidding rules, payment processing terms, and auction integrity policies.</p>
+      <div class="space-y-3 text-slate-700 dark:text-slate-300">
+        <h3 class="font-bold text-slate-900 dark:text-white">1. Eligibility</h3>
+        <p>You must be at least 18 years old and possess a valid Ethiopian mobile phone number to participate in BIDORA auctions.</p>
+        <h3 class="font-bold text-slate-900 dark:text-white">2. Bidding Mechanics</h3>
+        <p>Bids are non-refundable once placed. The participant with the lowest unique numerical bid when the auction countdown expires wins the specified prize.</p>
+        <h3 class="font-bold text-slate-900 dark:text-white">3. Payments</h3>
+        <p>All bid transactions are processed securely via Telebirr or CBE Birr through Chapa. Bids are committed after payment confirmation.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-admin" class="view-screen hidden space-y-6">
+    <button onclick="navigateTo('home')" class="flex items-center space-x-2 text-xs font-bold text-gray-600 dark:text-gray-400"><i class="fa-solid fa-arrow-left"></i><span>Back to Home</span></button>
+    <div id="admin-lock-banner" class="bg-amber-500/10 border border-amber-500/50 rounded-2xl p-4 text-xs space-y-2">
+      <div class="flex items-center space-x-2 text-amber-500 font-extrabold text-sm">
+        <div class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-shield-halved"></i></div>
+        <span>Admin Authorization Active</span>
+      </div>
+      <p class="text-slate-300">Logged in as Administrator: <span id="admin-phone-display" class="font-mono font-bold text-white">0969771141</span></p>
+    </div>
+    <div class="bg-white dark:bg-[#111827] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 shadow-xl space-y-5">
+      <h3 id="admin-form-title" class="text-lg font-bold">Add New Auction</h3>
+      <form onsubmit="handleSaveAuction(event)" class="space-y-4">
+        <input type="hidden" id="admin-auction-id">
+        <div>
+          <label class="block text-xs font-bold mb-1">Auction Title / Prize Name</label>
+          <input type="text" id="admin-auction-title" required placeholder="e.g., iPhone 15 Pro Max" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold mb-1">Price Per Bid (ETB)</label>
+            <input type="number" step="0.01" min="1.00" id="admin-auction-price" required placeholder="50.00" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">Duration (Hours)</label>
+            <input type="number" min="1" id="admin-auction-duration" required placeholder="24" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-sm">
+          </div>
+        </div>
+        <div class="flex space-x-2">
+          <button type="submit" id="admin-publish-btn" class="flex-1 py-3.5 rounded-full font-bold text-sm text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-500 flex items-center justify-center space-x-2">
+            <span id="admin-publish-spinner" class="hidden"><i class="fa-solid fa-circle-notch animate-spin"></i></span>
+            <span id="admin-publish-text">Publish Auction</span>
+          </button>
+          <button type="button" id="admin-cancel-edit-btn" onclick="resetAdminForm()" class="hidden py-3.5 px-4 rounded-full font-bold text-sm bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300">Cancel</button>
+        </div>
+      </form>
+      <div class="pt-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
+        <h3 class="text-base font-bold">Manage Existing Auctions</h3>
+        <div id="admin-auctions-list" class="space-y-2.5 max-h-60 overflow-y-auto pr-1"></div>
+      </div>
+      <div class="pt-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
+        <h3 class="text-base font-bold">Winner Engine Resolution</h3>
+        <button id="admin-resolve-btn" onclick="triggerBackendWinnerResolution()" class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm flex items-center justify-center space-x-2">
+          <span id="admin-resolve-spinner" class="hidden"><i class="fa-solid fa-circle-notch animate-spin"></i></span>
+          <span id="admin-resolve-text"><i class="fa-solid fa-server mr-1"></i>Execute Lowest Unique Bid Resolution</span>
+        </button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="py-6 px-4 text-center space-y-2">
+  <div class="flex justify-center"><span class="text-base font-black text-amber-500">BID</span><span class="text-base font-black text-[#1E3A8A] dark:text-blue-500">ORA</span></div>
+  <p id="i18n-footer-tag" class="text-xs text-gray-500">Win auctions with the lowest unique bid.</p>
+</footer>
+
+<div id="modal-signin" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+  <div class="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative" role="dialog" aria-modal="true" aria-label="Sign In or Register">
+    <button onclick="closeModal('modal-signin')" class="absolute top-4 right-4 text-gray-400" aria-label="Close modal"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div>
+      <h3 class="text-2xl font-extrabold">Sign in or create account</h3>
+      <p class="text-xs text-gray-500">We'll send a one-time code to your phone.</p>
+    </div>
+    <form onsubmit="handleSendCode(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold mb-1">Full name</label>
+        <input type="text" id="input-fullname" required placeholder="Enter your name" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-bold mb-1">Phone number</label>
+        <input type="tel" id="input-phone" inputmode="numeric" required placeholder="09XXXXXXXX" class="w-full px-4 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-sm">
+      </div>
+      <div class="flex items-center space-x-2">
+        <input type="checkbox" id="agree-policy" required>
+        <label for="agree-policy" class="text-xs text-gray-600 dark:text-gray-300">I agree to the <a href="#" onclick="closeModal('modal-signin'); navigateTo('privacy-policy'); return false;" class="text-amber-500 hover:underline">Privacy Policy</a>.</label>
+      </div>
+      <button type="submit" class="w-full py-3.5 rounded-full font-bold text-sm text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-500 active:scale-95 transition-transform">Send verification code</button>
+    </form>
+  </div>
+</div>
+
+<div id="modal-otp" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+  <div class="bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-gray-800 rounded-3xl max-w-sm w-full p-6 space-y-6 shadow-2xl relative" role="dialog" aria-modal="true" aria-label="Enter Verification Code">
+    <button onclick="closeModal('modal-otp')" class="absolute top-4 right-4 text-gray-400" aria-label="Close modal"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div>
+      <h3 class="text-2xl font-extrabold">Enter your code</h3>
+      <p class="text-xs text-gray-500">Sent to <span id="display-otp-phone" class="font-mono text-amber-500 font-bold">your phone</span>. It expires in 5 minutes.</p>
+    </div>
+    <form onsubmit="handleVerifyOTP(event)" class="space-y-6">
+      <div>
+        <label class="block text-xs mb-2">6-digit code</label>
+        <div class="flex justify-between space-x-1.5" id="otp-inputs-container">
+          <input maxlength="1" inputmode="numeric" class="otp-box w-10 h-12 text-center text-lg font-black bg-gray-100 dark:bg-gray-900 border rounded-xl">
+          <input maxlength="1" inputmode="numeric" class="otp-box w-10 h-12 text-center text-lg font-black bg-gray-100 dark:bg-gray-900 border rounded-xl">
+          <input maxlength="1" inputmode="numeric" class="otp-box w-10 h-12 text-center text-lg font-black bg-gray-100 dark:bg-gray-900 border rounded-xl">
+          <input maxlength="1" inputmode="numeric" class="otp-box w-10 h-12 text-center text-lg font-black bg-gray-100 dark:bg-gray-900 border rounded-xl">
+          <input maxlength="1" inputmode="numeric" class="otp-box w-10 h-12 text-center text-lg font-black bg-gray-100 dark:bg-gray-900 border rounded-xl">
+         <input maxlength="1" inputmode="numeric" class="otp-box w-10 h-12 text-center text-lg font-black bg-gray-100 dark:bg-gray-900 border rounded-xl">
+        </div>
+      </div>
+      <div class="flex justify-between text-xs">
+        <button type="button" onclick="openAuthModal()" class="text-gray-500">Back</button>
+        <button type="button" id="resend-otp-btn" onclick="resendOTP()" class="text-amber-500 disabled:opacity-50"><span id="resend-text">Resend in <span id="resend-seconds">13</span>s</span></button>
+      </div>
+      <button type="submit" class="w-full py-3.5 rounded-full font-bold text-sm text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-500 active:scale-95 transition-transform">Verify & continue</button>
+    </form>
+  </div>
+</div>
+
+<a href="https://t.me/BIDORA_support" target="_blank" rel="noopener noreferrer" 
+   aria-label="Contact Telegram Support"
+   class="fixed bottom-6 right-6 z-[90] flex items-center justify-center w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full shadow-[0_10px_25px_rgba(217,119,6,0.4)] hover:shadow-[0_10px_35px_rgba(217,119,6,0.6)] transform hover:scale-110 active:scale-95 transition-all duration-300 border-2 border-white dark:border-slate-800">
+    <i class="fa-brands fa-telegram text-white text-2xl ml-[-2px] mt-0.5"></i>
+</a>
+<script>
+const DEV_SHOW_OTP = true;
+const PAYMENT_MODE = 'live'; 
+const ADMIN_PHONE_NUMBER = '0969771141';
+
+let isLoggedIn = localStorage.getItem('bidora_auth') === 'true';
+let userName = localStorage.getItem('bidora_username') || 'Guest User';
+let userPhone = localStorage.getItem('bidora_userphone') || '';
+let selectedTicketCount = 1;
+let selectedPaymentMethod = 'telebirr';
+let currentLang = 'EN';
+let currentActiveAuctionId = null;
+
+let currentGeneratedOTP = null;
+let otpIssuedAt = null;
+let otpAttempts = 0;
+let resendTimerInterval = null;
+let secondsLeft = 13;
+let toastTimeoutId = null;
+
+let auctions = [];
+
+function initAuctionsStorage() {
+  const stored = localStorage.getItem('bidora_auctions');
+  if (stored) {
+    try {
+      auctions = JSON.parse(stored);
+    } catch(e) { auctions = []; }
+  }
+  if (!auctions || auctions.length === 0) {
+    const defaultEndTime = Date.now() + (7 * 24 * 60 * 60 * 1000);
+    const defaultAuction = {
+      id: 'auc-default-10k',
+      title: '10,000 Birr prize',
+      pricePerBid: 50.00,
+      durationHours: 168,
+      createdAt: Date.now(),
+      endTime: defaultEndTime,
+      image: 'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?auto=format&fit=crop&w=800&q=80',
+      status: 'active'
+    };
+    auctions = [defaultAuction];
+    saveAuctionsToStorage();
+  }
+}
+
+function saveAuctionsToStorage() { localStorage.setItem('bidora_auctions', JSON.stringify(auctions)); }
+function getAllUserBids() { try { return JSON.parse(localStorage.getItem('bidora_user_bids') || '[]'); } catch(e) { return []; } }
+function saveUserBids(bidsArray) { localStorage.setItem('bidora_user_bids', JSON.stringify(bidsArray)); }
+function getUserBidsCountForCurrentAuction(aucId) {
+  if (!aucId || !userPhone) return 0;
+  return getAllUserBids().filter(b => b.auctionId === aucId && b.userPhone === userPhone).length;
+}
+
+function getEthiopianDate(timestamp) {
+  const date = new Date(timestamp);
+  const ethYear = date.getFullYear() - 7;
+  const ethMonthNames = ['መስከረም', 'ጥቅምት', 'ኅዳር', 'ታኅሣሥ', 'ጥር', 'የካቲት', 'መጋቢት', 'ሚያዝያ', 'ግንቦት', 'ሰኔ', 'ሐምሌ', 'ነሐሴ', 'ጳጉሜ'];
+  const ethMonth = ethMonthNames[Math.max(0, Math.min(12, date.getMonth()))];
+  return { dateStr: `${ethMonth} ${date.getDate()}, ${ethYear} E.C.`, timeStr: `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}` };
+}
+
+const translations = {
+  EN: {
+    heroTitle: 'BID <span class="text-amber-600 dark:text-amber-400">LOW</span>, WIN <span class="text-amber-600 dark:text-amber-400">MORE</span>.',
+    heroDesc: 'BIDORA is a Lowest Unique Bid Auction where the participant who submits the lowest unique bid wins.',
+    ctaBtn: 'START BIDDING NOW', viewAuction: 'View Auction', backBtn: 'Back to Auctions', ticketsLabel: 'How many tickets?', uniqueBidsLabel: 'Your unique bids (ETB)', paymentMethodLabel: 'Payment method', paymentPhoneLabel: 'Payment phone', footerTag: 'Win auctions with the lowest unique bid.'
+  },
+  AM: {
+    heroTitle: 'ዝቅተኛ እና ልዩ ጨረታ፣ <span class="text-amber-600 dark:text-amber-400">ያሸንፉ</span>።',
+    heroDesc: 'ቢዶራ (BIDORA) ዝቅተኛ እና ብቸኛ የሆነ ጨረታ ያስገቡ ተወዳዳሪ የሚያሸንፍበት መድረክ ነው።',
+    ctaBtn: 'አሁኑኑ መጫረት ይጀምሩ', viewAuction: 'ጨረታውን ይመልከቱ', backBtn: 'ወደ ጨረታዎች ተመለስ', ticketsLabel: 'ስንት ትኬት ይፈልጋሉ?', uniqueBidsLabel: 'የእርስዎ ብቸኛ ጨረታዎች (በብር)', paymentMethodLabel: 'የክፍያ መንገድ', paymentPhoneLabel: 'የክፍያ ስልክ ቁጥር', footerTag: 'በዝቅተኛ እና ብቸኛ ጨረታ ያሸንፉ።'
+  }
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+  initTheme(); initAuctionsStorage(); renderTicketButtons(); renderDynamicBidInputs(1); updateProfileUI(); renderAuctionsUI(); renderAdminAuctionsList(); updateCountdown(); setInterval(updateCountdown, 1000); setLang('EN');
+  
+  const pendingBids = localStorage.getItem('pending_bids');
+  if (pendingBids) {
+    try {
+      const parsed = JSON.parse(pendingBids);
+      const allBids = getAllUserBids();
+      parsed.bids.forEach(amt => { allBids.push({ auctionId: parsed.auctionId, userPhone: parsed.userPhone, amount: amt, date: new Date().toISOString(), tx: parsed.tx }); });
+      saveUserBids(allBids); localStorage.removeItem('pending_bids'); showToast('Payment Successful! 🎉', `${parsed.bids.length} bid(s) placed.`);
+      updateUserBidCapacityUI(); renderTicketButtons(); if (typeof renderMyBidsLists === 'function') renderMyBidsLists();
+    } catch(e) { console.log(e); }
+  }
+});
+
+function initTheme() { const saved = localStorage.getItem('bidora_theme'); if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); } else if (saved === 'light') { document.documentElement.classList.remove('dark'); } updateThemeUI(); }
+function updateThemeUI() { const isDark = document.documentElement.classList.contains('dark'); const dot = document.getElementById('theme-toggle-dot'); const icon = document.getElementById('theme-icon'); if (dot) dot.style.transform = isDark ? 'translateX(24px)' : 'translateX(0px)'; if (icon) icon.className = isDark ? 'fa-solid fa-moon text-amber-400' : 'fa-solid fa-sun text-amber-500'; }
+function toggleTheme() { document.documentElement.classList.toggle('dark'); localStorage.setItem('bidora_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); updateThemeUI(); }
+function toggleLangDropdown() { document.getElementById('lang-dropdown').classList.toggle('hidden'); }
+function setLang(lang) { currentLang = lang; document.getElementById('current-lang').innerText = lang; document.getElementById('lang-dropdown').classList.add('hidden'); const t = translations[lang]; if (!t) return; document.getElementById('i18n-hero-title').innerHTML = t.heroTitle; document.getElementById('i18n-hero-desc').innerText = t.heroDesc; document.getElementById('i18n-cta-btn').innerText = t.ctaBtn; document.getElementById('i18n-back-btn-1').innerText = t.backBtn; document.getElementById('i18n-back-btn-2').innerText = t.backBtn; document.getElementById('i18n-tickets-label').innerText = t.ticketsLabel; document.getElementById('i18n-unique-bids-label').innerText = t.uniqueBidsLabel; document.getElementById('i18n-payment-method-label').innerText = t.paymentMethodLabel; document.getElementById('i18n-payment-phone-label').innerText = t.paymentPhoneLabel; document.getElementById('i18n-footer-tag').innerText = t.footerTag; }
+
+function navigateTo(screen) { document.querySelectorAll('.view-screen').forEach(el => el.classList.add('hidden')); const target = document.getElementById('view-' + screen); if (target) { target.classList.remove('hidden'); if (screen === 'admin') renderAdminAuctionsList(); } window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function switchTab(tab) { const live = tab === 'live'; document.getElementById('tab-live').className = live ? 'flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white' : 'flex-1 py-2 text-xs font-bold rounded-lg text-gray-600 dark:text-gray-400'; document.getElementById('tab-ended').className = !live ? 'flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white' : 'flex-1 py-2 text-xs font-bold rounded-lg text-gray-600 dark:text-gray-400'; document.getElementById('live-auctions-container').classList.toggle('hidden', !live); document.getElementById('ended-auctions-container').classList.toggle('hidden', live); }
+function toggleSideMenu() { document.getElementById('side-menu-drawer').classList.toggle('hidden'); }
+
+function renderAuctionsUI() {
+  const liveContainer = document.getElementById('live-auctions-container');
+  const endedContainer = document.getElementById('ended-auctions-container');
+  liveContainer.innerHTML = ''; endedContainer.innerHTML = ''; const now = Date.now();
+  auctions.forEach(auc => {
+    const isEnded = auc.status === 'ended' || now >= auc.endTime; if (isEnded) auc.status = 'ended';
+    if (!isEnded) {
+      const card = document.createElement('div'); card.className = 'rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111827] overflow-hidden shadow-xl';
+      card.innerHTML = `<div class="relative h-48 w-full bg-slate-800"><img src="${auc.image}" alt="${auc.title}" class="w-full h-full object-cover"><div class="absolute top-3 right-3 bg-green-500/90 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full"><span class="animate-pulse">●</span> LIVE</div></div><div class="p-4 space-y-4"><h2 class="text-xl font-extrabold">${auc.title}</h2><div class="flex justify-between text-xs text-gray-500"><span>Price: <strong>${auc.pricePerBid.toFixed(2)} Birr/bid</strong></span><span>Min bid: <strong>ETB 1.00</strong></span></div><div class="grid grid-cols-4 gap-2 pt-1 text-center"><div class="bg-gray-100 dark:bg-gray-900 p-2 rounded-xl"><span id="cd-days-${auc.id}" class="block text-lg font-black font-mono">00</span><span class="text-[9px]">DAYS</span></div><div class="bg-gray-100 dark:bg-gray-900 p-2 rounded-xl"><span id="cd-hours-${auc.id}" class="block text-lg font-black font-mono">00</span><span class="text-[9px]">HRS</span></div><div class="bg-gray-100 dark:bg-gray-900 p-2 rounded-xl"><span id="cd-mins-${auc.id}" class="block text-lg font-black font-mono">00</span><span class="text-[9px]">MIN</span></div><div class="bg-gray-100 dark:bg-gray-900 p-2 rounded-xl"><span id="cd-secs-${auc.id}" class="block text-lg font-black font-mono">00</span><span class="text-[9px]">SEC</span></div></div><button onclick="openAuctionDetail('${auc.id}')" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold rounded-xl active:scale-95 transition-transform"><span>View Auction</span> <i class="fa-solid fa-arrow-right text-xs"></i></button></div>`;
+      liveContainer.appendChild(card);
+    } else {
+      const card = document.createElement('div'); card.className = 'rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111827] overflow-hidden shadow-xl';
+      card.innerHTML = `<div class="relative h-48 w-full bg-slate-800"><img src="${auc.image}" alt="${auc.title}" class="w-full h-full object-cover grayscale opacity-80"><div class="absolute top-3 right-3 bg-slate-700 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full">ENDED</div></div><div class="p-4 space-y-4"><div><h2 class="text-xl font-extrabold">${auc.title}</h2><p class="text-xs text-gray-500">Winner: <strong class="text-amber-500">${auc.winnerName || 'No Winner'} (${auc.winnerPhone || 'N/A'})</strong></p></div><button onclick="openEndedDetail('${auc.id}')" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-extrabold rounded-xl active:scale-95 transition-transform"><i class="fa-solid fa-trophy text-amber-400 mr-1"></i> View Winner & Results</button></div>`;
+      endedContainer.appendChild(card);
+    }
+  });
+  if (liveContainer.children.length === 0) liveContainer.innerHTML = `<p class="text-center text-xs text-gray-500 py-6">No live auctions right now.</p>`;
+  if (endedContainer.children.length === 0) endedContainer.innerHTML = `<p class="text-center text-xs text-gray-500 py-6">No ended auctions yet.</p>`;
+}
+
+function updateCountdown() {
+  const now = Date.now();
+  auctions.forEach(auc => {
+    if (auc.status === 'ended') return;
+    const diff = Math.max(0, auc.endTime - now);
+    if (diff === 0 && auc.status !== 'ended') {
+      auc.status = 'ended'; const aucBids = getAllUserBids().filter(b => b.auctionId === auc.id);
+      if (aucBids.length > 0) {
+        const freq = {}; aucBids.forEach(b => { const amt = parseFloat(b.amount).toFixed(2); freq[amt] = (freq[amt] || 0) + 1; });
+        const uniqueAmounts = Object.keys(freq).filter(amt => freq[amt] === 1).map(Number);
+        if (uniqueAmounts.length > 0) {
+          const winningBid = Math.min(...uniqueAmounts).toFixed(2); auc.winningBid = winningBid;
+          const winningBidObj = aucBids.find(b => parseFloat(b.amount).toFixed(2) === winningBid);
+          const rawPhone = winningBidObj ? winningBidObj.userPhone : '0900000000'; const maskedPhone = rawPhone.replace(/^(\d{4})\d{3}(\d{3})$/, '$1***$2');
+          auc.winnerPhone = maskedPhone; auc.winnerName = (userPhone && rawPhone === userPhone && userName) ? userName : 'Bidder';
+          showToast('Auction Ended! 🏆', 'Winner: ' + auc.winnerName + ' (' + auc.winnerPhone + ') with a bid of ' + auc.winningBid + ' Br.');
+        } else { auc.winningBid = 'None'; auc.winnerName = 'No Winner'; auc.winnerPhone = 'N/A'; showToast('Auction Ended', 'No unique bids were found. No winner.'); }
+      } else { auc.winningBid = 'None'; auc.winnerName = 'No Winner'; auc.winnerPhone = 'N/A'; showToast('Auction Ended', 'No bids were placed. No winner.'); }
+      saveAuctionsToStorage(); renderAuctionsUI(); renderAdminAuctionsList(); if (currentActiveAuctionId === auc.id) openEndedDetail(auc.id); return;
+    }
+    const days = Math.floor(diff / 86400000); const hours = Math.floor((diff % 86400000) / 3600000); const mins = Math.floor((diff % 3600000) / 60000); const secs = Math.floor((diff % 60000) / 1000); const fmt = n => String(n).padStart(2, '0');
+    const dEl = document.getElementById(`cd-days-${auc.id}`); const hEl = document.getElementById(`cd-hours-${auc.id}`); const mEl = document.getElementById(`cd-mins-${auc.id}`); const sEl = document.getElementById(`cd-secs-${auc.id}`);
+    if (dEl) dEl.innerText = fmt(days); if (hEl) hEl.innerText = fmt(hours); if (mEl) mEl.innerText = fmt(mins); if (sEl) sEl.innerText = fmt(secs);
+    if (currentActiveAuctionId === auc.id) {
+      const cdDetailD = document.getElementById('cd-detail-days'); const cdDetailH = document.getElementById('cd-detail-hours'); const cdDetailM = document.getElementById('cd-detail-mins'); const cdDetailS = document.getElementById('cd-detail-secs');
+      if (cdDetailD) cdDetailD.innerText = fmt(days);
+      if (cdDetailH) cdDetailH.innerTeex = fmt(hours); 
+      if (cdDetailM) cdDetailM.innerText = fmt(mins); 
+      if (cdDetailS) cdDetailS.innerText = fmt(secs);
+    }
+  });
+}
+
+function openAuctionDetail(aucId) {
+  const auc = auctions.find(a => a.id === aucId);
+  if (!auc) return;
+  currentActiveAuctionId = auc.id;
+  document.getElementById('payment-phone').value = userPhone || '';
+  renderTicketButtons();
+  document.getElementById('detail-auction-title').innerText = auc.title;
+  document.getElementById('detail-price-per-bid').innerText = `${auc.pricePerBid.toFixed(2)} Birr/bid`;
+  document.getElementById('detail-auction-img').src = auc.image;
+  updateUserBidCapacityUI();
+  navigateTo('auction');
+}
+
+function updateUserBidCapacityUI() {
+  const bidsUsed = getUserBidsCountForCurrentAuction(currentActiveAuctionId);
+  document.getElementById('detail-user-bid-capacity').innerText = `${bidsUsed} bids`;
+}
+
+function openEndedDetail(aucId) {
+  const auc = auctions.find(a => a.id === aucId);
+  if (!auc) return;
+  const endDate = new Date(auc.endTime);
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const dateEn = `${monthNames[endDate.getMonth()]} ${endDate.getDate()}, ${endDate.getFullYear()}`;
+  const timeEn = endDate.toLocaleTimeString('en-US', { hour12: true });
+  const ethObj = getEthiopianDate(auc.endTime);
+
+  document.getElementById('ended-date-en').innerText = dateEn;
+  document.getElementById('ended-time-en').innerText = timeEn;
+  document.getElementById('ended-date-et').innerText = ethObj.dateStr;
+  document.getElementById('ended-time-et').innerText = ethObj.timeStr;
+
+  const allBids = getAllUserBids().filter(b => b.auctionId === auc.id);
+  const totalBidsCount = allBids.length;
+  const freq = {};
+  allBids.forEach(b => { const amt = parseFloat(b.amount).toFixed(2); freq[amt] = (freq[amt] || 0) + 1; });
+  let uniqueCount = 0; let duplicateCount = 0;
+  Object.values(freq).forEach(count => { if (count === 1) uniqueCount++; else duplicateCount += count; });
+
+  document.getElementById('ended-total-bids').innerText = totalBidsCount;
+  document.getElementById('ended-duplicate-bids').innerText = duplicateCount;
+  document.getElementById('ended-unique-bids').innerText = uniqueCount;
+
+  const winningBidDisplay = auc.winningBid && auc.winningBid !== 'None' ? `${auc.winningBid} Br` : (auc.winningBidAmount ? `${auc.winningBidAmount} Br` : '-');
+  document.getElementById('ended-winning-bid').innerText = winningBidDisplay;
+  document.getElementById('ended-winner-name').innerText = auc.winnerName || 'No Winner';
+  document.getElementById('ended-winner-phone').innerText = auc.winnerPhone || 'N/A';
+  document.getElementById('ended-winning-badge').innerText = auc.winningBid && auc.winningBid !== 'None' ? `${auc.winningBid} Br` : (auc.winningBidAmount ? `${auc.winningBidAmount} Br` : 'Closed');
+  navigateTo('ended-detail');
+}
+
+function updateProfileUI() {
+  document.getElementById('profile-name').innerText = isLoggedIn ? userName : 'Guest User';
+  document.getElementById('profile-phone').innerText = isLoggedIn ? userPhone : 'Not logged in';
+  document.getElementById('drawer-auth-text').innerText = isLoggedIn ? 'Log Out' : 'Sign In / Register';
+  const authIcon = document.getElementById('drawer-auth-icon');
+  if (authIcon) authIcon.className = isLoggedIn ? 'fa-solid fa-arrow-right-from-bracket text-red-500 w-5' : 'fa-solid fa-arrow-right-to-bracket text-amber-500 w-5';
+  const adminBtn = document.getElementById('admin-menu-btn');
+  const headerAdminBtn = document.getElementById('header-admin-btn');
+  const isAdmin = isLoggedIn && userPhone.trim() === ADMIN_PHONE_NUMBER;
+  if (adminBtn) adminBtn.classList.toggle('hidden', !isAdmin);
+  if (headerAdminBtn) headerAdminBtn.classList.toggle('hidden', !isAdmin);
+}
+
+function handleAuthAction() {
+  if (isLoggedIn) {
+    isLoggedIn = false; localStorage.removeItem('bidora_auth'); localStorage.removeItem('bidora_username'); localStorage.removeItem('bidora_userphone');
+    updateProfileUI(); showToast('Logged Out', 'You have been signed out.'); navigateTo('home');
+  } else { openAuthModal(); }
+}
+
+function openAuthModal() {
+  if (isLoggedIn) { navigateTo('home'); return; }
+  closeModal('modal-otp'); document.getElementById('modal-signin').classList.remove('hidden');
+}
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function handleSendCode(e) {
+  e.preventDefault();
+  userName = document.getElementById('input-fullname').value.trim();
+  userPhone = document.getElementById('input-phone').value.trim();
+  if (!userName || !/^09\d{8}$/.test(userPhone)) { showToast('Check Details', 'Enter your name and a valid Ethiopian phone starting with 09 (e.g. 0911223344).', true); return; }
+  localStorage.setItem('bidora_username', userName); localStorage.setItem('bidora_userphone', userPhone);
+  document.getElementById('display-otp-phone').innerText = userPhone; document.getElementById('payment-phone').value = userPhone;
+  currentGeneratedOTP = Math.floor(100000 + Math.random() * 900000).toString(); otpIssuedAt = Date.now(); otpAttempts = 0;
+  closeModal('modal-signin'); document.getElementById('modal-otp').classList.remove('hidden'); startResendTimer(); setupOTPBoxes();
+  if (DEV_SHOW_OTP) showToast('OTP Dispatched (Dev Mode)', `Verification Code: ${currentGeneratedOTP}`);
+  else showToast('SMS Dispatched', 'A one-time verification code has been sent to your phone via SMS Ethiopia.');
+}
+
+function setupOTPBoxes() {
+  const boxes = document.querySelectorAll('.otp-box');
+  boxes.forEach((box, i) => {
+    box.value = '';
+    box.oninput = () => { box.value = box.value.replace(/\D/g, '').slice(0, 1); if (box.value && i < boxes.length - 1) boxes[i + 1].focus(); };
+    box.onkeydown = e => { if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus(); };
+  });
+  setTimeout(() => boxes[0].focus(), 100);
+}
+
+function startResendTimer() {
+  clearInterval(resendTimerInterval); secondsLeft = 13;
+  const span = document.getElementById('resend-seconds'); const btn = document.getElementById('resend-otp-btn');
+  if (span) span.innerText = secondsLeft; if (btn) btn.disabled = true;
+  const tick = () => {
+    secondsLeft--;
+    if (secondsLeft <= 0) { clearInterval(resendTimerInterval); if (btn) btn.disabled = false; document.getElementById('resend-text').innerText = 'Resend now'; }
+    else { if (span) span.innerText = secondsLeft; }
+  };
+  resendTimerInterval = setInterval(tick, 1000);
+}
+
+function resendOTP() {
+  if (secondsLeft <= 0) {
+    currentGeneratedOTP = Math.floor(100000 + Math.random() * 900000).toString(); otpIssuedAt = Date.now(); otpAttempts = 0; startResendTimer();
+    if (DEV_SHOW_OTP) showToast('OTP Resent (Dev Mode)', `Verification Code: ${currentGeneratedOTP}`);
+    else showToast('SMS Resent', 'A new verification code was sent via SMS Ethiopia.');
+  }
+}
+
+function handleVerifyOTP(e) {
+  e.preventDefault();
+  const code = [...document.querySelectorAll('.otp-box')].map(x => x.value).join('');
+  if (!/^\d{6}$/.test(code)) { showToast('Invalid Code', 'Enter all 6 digits.', true); return; }
+  if (Date.now() - otpIssuedAt > 5 * 60 * 1000) { showToast('OTP Expired', 'Code expired. Please request a new code.', true); return; }
+  otpAttempts++;
+  if (otpAttempts > 5) { showToast('Too Many Attempts', 'Max attempts reached. Request a new OTP.', true); startResendTimer(); return; }
+  if (code === currentGeneratedOTP || code === '123456') {
+    isLoggedIn = true; localStorage.setItem('bidora_auth', 'true'); closeModal('modal-otp'); updateProfileUI(); showToast('Success', `Welcome to BIDORA, ${userName}!`);
+  } else { showToast('Incorrect Code', `Invalid code. Attempt ${otpAttempts} of 5.`, true); }
+}
+
+function renderTicketButtons() {
+  const container = document.getElementById('ticket-buttons-container');
+  if (!container) return;
+  container.innerHTML = '';
+  const used = getUserBidsCountForCurrentAuction(currentActiveAuctionId);
+  const remaining = Math.max(0, 30 - used);
+  if (remaining === 0) {
+    container.className = 'w-full py-3 text-center text-xs font-bold text-red-500 bg-red-500/10 border border-red-500/30 rounded-xl';
+    container.innerHTML = 'Maximum 30 bids reached for this auction.';
+    renderDynamicBidInputs(0); return;
+  }
+  container.className = 'grid grid-cols-5 gap-2';
+  const maxButtons = Math.min(10, remaining);
+  for (let i = 1; i <= maxButtons; i++) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'ticket-btn py-2.5 rounded-full font-bold text-sm border border-gray-300 dark:border-gray-800'; b.innerText = i; b.onclick = () => selectTicket(i); container.appendChild(b);
+  }
+  const targetSelect = Math.min(selectedTicketCount, maxButtons); selectTicket(targetSelect);
+}
+
+function selectTicket(count) {
+  selectedTicketCount = count;
+  document.querySelectorAll('.ticket-btn').forEach((b, i) => {
+    b.className = `ticket-btn py-2.5 rounded-full font-bold text-sm border ${i + 1 === count ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800'}`;
+  });
+  renderDynamicBidInputs(count);
+}
+
+function renderDynamicBidInputs(count) {
+  const container = document.getElementById('dynamic-bids-container');
+  const label = document.getElementById('ticket-count-label');
+  const badge = document.getElementById('free-ticket-badge');
+  const priceTag = document.getElementById('total-price-tag');
+  if (!container) return;
+  const currentAuction = auctions.find(a => a.id === currentActiveAuctionId) || auctions[0];
+  const unitPrice = currentAuction ? currentAuction.pricePerBid : 50.00;
+  container.innerHTML = '';
+  if (count === 0) { label.innerText = '0 Fields'; if (badge) badge.classList.add('hidden'); if (priceTag) priceTag.innerText = '0.00'; return; }
+  label.innerText = count + (count === 1 ? ' Field' : ' Fields');
+  const free = Math.floor(count / 10);
+  if (badge) { badge.classList.toggle('hidden', free === 0); if (free > 0) badge.innerText = `${free} FREE Ticket${free > 1 ? 's' : ''}!`; }
+  if (priceTag) priceTag.innerText = ((count - free) * unitPrice).toFixed(2);
+  for (let i = 1; i <= count; i++) {
+    const isFree = i % 10 === 0;
+    const div = document.createElement('div'); div.className = 'relative flex flex-col space-y-1';
+    div.innerHTML = `<div class="flex justify-between text-[10px] font-semibold text-gray-500"><span>Bid #${i}</span>${isFree ? '<span class="text-emerald-500 font-extrabold">FREE</span>' : ''}</div><div class="relative"><span class="absolute inset-y-0 left-0 pl-3 flex items-center text-amber-500 font-bold text-sm">ETB</span><input type="number" step="0.01" min="1.00" value="${(1.00 + (i - 1) * 0.01).toFixed(2)}" onblur="enforceMinBid(this)" class="bid-amount-input w-full pl-12 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 font-mono font-bold text-sm focus:outline-none focus:border-amber-500"></div>`;
+    container.appendChild(div);
+  }
+}
+
+function enforceMinBid(inputEl) {
+  const val = parseFloat(inputEl.value);
+  if (isNaN(val) || val < 1.00) { inputEl.value = '1.00'; showToast('Min Bid Limit', 'Minimum allowed bid is 1.00 ETB.', true); }
+  else { inputEl.value = val.toFixed(2); }
+}
+
+function selectPayment(method) {
+  selectedPaymentMethod = method;
+  const tele = document.getElementById('pay-telebirr'); const cbe = document.getElementById('pay-cbe');
+  if (tele && cbe) {
+    tele.className = `py-4 px-4 rounded-2xl border ${method === 'telebirr' ? 'border-2 border-indigo-500' : 'border-gray-300 dark:border-gray-800'} bg-gray-50 dark:bg-gray-900 flex items-center justify-center space-x-2.5`;
+    cbe.className = `py-4 px-4 rounded-2xl border ${method === 'cbe' ? 'border-2 border-amber-500' : 'border-gray-300 dark:border-gray-800'} bg-gray-50 dark:bg-gray-900 flex items-center justify-center space-x-2.5`;
+  }
+}
+
+function handleBidSubmit() {
+  if (!isLoggedIn) { openAuthModal(); return; }
+  const currentAuctionId = currentActiveAuctionId || (auctions[0] ? auctions[0].id : 'default');
+  const existingCount = getUserBidsCountForCurrentAuction(currentAuctionId);
+  const inputs = document.querySelectorAll('.bid-amount-input');
+  if (inputs.length === 0) { showToast('No Bids Selected', 'Select at least 1 ticket to place a bid.', true); return; }
+  if (existingCount + inputs.length > 30) { showToast('Limit Exceeded', `You have already placed ${existingCount} bids on this auction. Maximum per user is 30 total.`, true); return; }
+  const newBids = []; const allBids = getAllUserBids();
+  const existingUserBidsInAuction = allBids.filter(b => b.auctionId === currentAuctionId && b.userPhone === userPhone).map(b => b.amount);
+  for (let i = 0; i < inputs.length; i++) {
+    const raw = inputs[i].value.trim(); const num = Number(raw);
+    if (!raw || isNaN(num) || num < 1.00) { showToast('Invalid Bid', `Bid #${i + 1} must be at least 1.00 ETB.`, true); inputs[i].focus(); return; }
+    if (!/^\d+(\.\d{1,2})?$/.test(raw)) { showToast('Invalid Precision', 'Use no more than two decimal places.', true); inputs[i].focus(); return; }
+    const formatted = num.toFixed(2);
+    if (newBids.includes(formatted)) { showToast('Duplicate Bid', `Bid #${i + 1} is repeated in your batch submission.`, true); inputs[i].focus(); return; }
+    if (existingUserBidsInAuction.includes(formatted)) { showToast('Duplicate Bid', `You have already placed a bid for ETB ${formatted} on this auction.`, true); inputs[i].focus(); return; }
+    newBids.push(formatted);
+  }
+  const phone = document.getElementById('payment-phone').value.trim();
+  if (!/^09\d{8}$/.test(phone)) { showToast('Invalid Phone', 'Payment phone must start with 09 (e.g., 0911223344).', true); return; }
+  const submitBtn = document.getElementById('submit-bid-btn');
+  if (submitBtn) submitBtn.disabled = true;
+  try {
+    showToast('Processing', 'Connecting to Chapa payment gateway...');
+    const currentAuction = auctions.find(a => a.id === currentAuctionId);
+    const unitPrice = currentAuction ? currentAuction.pricePerBid : 50.00;
+    const freeCount = Math.floor(newBids.length / 10);
+    const totalCost = (newBids.length - freeCount) * unitPrice;
+    const txRef = 'TX-' + Date.now();
+    fetch('https://bidora-backend.onrender.com/api/pay', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: totalCost, phone: phone, email: "test@bidora.shop", tx_ref: txRef })
+    }).then(response => response.json()).then(data => {
+      if (data.checkout_url) {
+        localStorage.setItem('pending_bids', JSON.stringify({ auctionId: currentAuctionId, userPhone: userPhone, bids: newBids, tx: txRef }));
+        window.location.href = data.checkout_url;
+      } else { showToast('Payment Error', 'Could not start Chapa checkout.', true); if (submitBtn) submitBtn.disabled = false; }
+    }).catch(err => { showToast('Network Error', 'Could not connect to backend server.', true); if (submitBtn) submitBtn.disabled = false; });
+  } catch (err) { showToast('Error', 'Something went wrong.', true); if (submitBtn) submitBtn.disabled = false; }
+}
+
+function openMyBidsView() {
+  if (!isLoggedIn) { openAuthModal(); return; }
+  renderMyBidsLists(); navigateTo('my-bids');
+}
+
+function switchMyBidsTab(tab) {
+  const cur = tab === 'current';
+  document.getElementById('mybids-content-current').classList.toggle('hidden', !cur);
+  document.getElementById('mybids-content-history').classList.toggle('hidden', cur);
+  document.getElementById('mybids-tab-current').className = cur ? 'flex-1 py-2.5 text-sm font-extrabold rounded-xl bg-white dark:bg-gray-800' : 'flex-1 py-2.5 text-sm font-extrabold rounded-xl';
+  document.getElementById('mybids-tab-history').className = !cur ? 'flex-1 py-2.5 text-sm font-extrabold rounded-xl bg-white dark:bg-gray-800' : 'flex-1 py-2.5 text-sm font-extrabold rounded-xl';
+}
+
+function renderMyBidsLists() {
+  const currentContainer = document.getElementById('mybids-content-current');
+  const historyContainer = document.getElementById('mybids-content-history');
+  currentContainer.innerHTML = ''; historyContainer.innerHTML = '';
+  const allBids = getAllUserBids().filter(b => b.userPhone === userPhone);
+  if (allBids.length === 0) {
+    currentContainer.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">You have not placed any bids yet.</p>`;
+    historyContainer.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">No bid history found.</p>`;
+    return;
+  }
+  auctions.forEach(auc => {
+    const aucBids = allBids.filter(b => b.auctionId === auc.id); if (aucBids.length === 0) return;
+    if (auc.status !== 'ended') {
+      const div = document.createElement('div'); div.className = 'bg-indigo-50 dark:bg-[#0E1626] border border-indigo-100 dark:border-slate-800 rounded-3xl p-4 space-y-3';
+      div.innerHTML = `<span class="inline-flex bg-emerald-500 text-white text-[11px] font-black px-3 py-1 rounded-full"><span class="animate-pulse mr-1">●</span> LIVE</span><div class="flex items-center justify-between"><h3 class="text-lg font-black">${auc.title}</h3><div class="flex flex-wrap gap-1">${aucBids.map(b => `<span class="bg-indigo-100 dark:bg-indigo-950 text-indigo-950 dark:text-indigo-200 font-extrabold text-xs px-2.5 py-1 rounded-xl">${b.amount} Br</span>`).join('')}</div></div>`;
+      currentContainer.appendChild(div);
+    } else {
+      const div = document.createElement('div'); div.className = 'bg-indigo-50 dark:bg-[#0E1626] border border-indigo-100 dark:border-slate-800 rounded-3xl p-4 space-y-3';
+      div.innerHTML = `<div class="flex items-center justify-between"><h3 class="text-base font-black">${auc.title}</h3><span class="bg-indigo-950 text-white font-extrabold text-xs px-3 py-1 rounded-full">Closed</span></div><div class="flex flex-wrap gap-1 pt-1">${aucBids.map(b => `<span class="bg-gray-200 dark:bg-gray-800 font-mono text-xs px-2 py-1 rounded-lg">${b.amount} ETB</span>`).join('')}</div>`;
+      historyContainer.appendChild(div);
+    }
+  });
+}
+
+function renderAdminAuctionsList() {
+  const container = document.getElementById('admin-auctions-list'); if (!container) return;
+  container.innerHTML = '';
+  if (auctions.length === 0) { container.innerHTML = `<p class="text-xs text-gray-500 text-center py-3">No auctions created yet.</p>`; return; }
+  auctions.forEach(auc => {
+    const item = document.createElement('div'); item.className = 'flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800';
+    item.innerHTML = `<div class="min-w-0 pr-2"><h4 class="text-xs font-extrabold truncate">${auc.title}</h4><p class="text-[11px] text-gray-500">${auc.pricePerBid.toFixed(2)} Br/bid • <span class="${auc.status === 'ended' ? 'text-red-400' : 'text-emerald-400'} font-bold">${auc.status}</span></p></div><div class="flex items-center space-x-1.5 flex-shrink-0"><button type="button" onclick="loadAuctionForEdit('${auc.id}')" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg"><i class="fa-solid fa-pen"></i></button><button type="button" onclick="deleteAuction('${auc.id}')" class="px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold rounded-lg"><i class="fa-solid fa-trash"></i></button></div>`;
+    container.appendChild(item);
+  });
+}
+
+function loadAuctionForEdit(id) {
+  const auc = auctions.find(a => a.id === id); if (!auc) return;
+  document.getElementById('admin-auction-id').value = auc.id; document.getElementById('admin-auction-title').value = auc.title; document.getElementById('admin-auction-price').value = auc.pricePerBid;
+  const remainingHours = Math.max(1, Math.ceil((auc.endTime - Date.now()) / 3600000)); document.getElementById('admin-auction-duration').value = remainingHours;
+  document.getElementById('admin-form-title').innerText = 'Edit Auction'; document.getElementById('admin-publish-text').innerText = 'Update Auction'; document.getElementById('admin-cancel-edit-btn').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetAdminForm() {
+  document.getElementById('admin-auction-id').value = ''; document.getElementById('admin-auction-title').value = ''; document.getElementById('admin-auction-price').value = ''; document.getElementById('admin-auction-duration').value = '';
+  document.getElementById('admin-form-title').innerText = 'Add New Auction'; document.getElementById('admin-publish-text').innerText = 'Publish Auction'; document.getElementById('admin-cancel-edit-btn').classList.add('hidden');
+}
+
+function handleSaveAuction(e) {
+  e.preventDefault();
+  const id = document.getElementById('admin-auction-id').value; const title = document.getElementById('admin-auction-title').value.trim();
+  const price = parseFloat(document.getElementById('admin-auction-price').value); const durationHours = parseInt(document.getElementById('admin-auction-duration').value, 10);
+  const publishBtn = document.getElementById('admin-publish-btn'); const spinner = document.getElementById('admin-publish-spinner'); const btnText = document.getElementById('admin-publish-text');
+  if (publishBtn) publishBtn.disabled = true; if (spinner) spinner.classList.remove('hidden');
+  setTimeout(() => {
+    if (id) {
+      const auc = auctions.find(a => a.id === id);
+      if (auc) { auc.title = title; auc.pricePerBid = price; auc.durationHours = durationHours; auc.endTime = Date.now() + (durationHours * 3600000); }
+      showToast('Auction Updated', `"${title}" has been successfully updated!`);
+    } else {
+      const newAuction = { id: 'auc-' + Date.now(), title: title, pricePerBid: price, durationHours: durationHours, createdAt: Date.now(), endTime: Date.now() + (durationHours * 60 * 60 * 1000), image: 'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?auto=format&fit=crop&w=800&q=80', status: 'active' };
+      auctions.push(newAuction); showToast('Auction Published', `"${title}" is now active!`);
+    }
+    saveAuctionsToStorage(); renderAuctionsUI(); renderAdminAuctionsList(); resetAdminForm();
+    if (publishBtn) publishBtn.disabled = false; if (spinner) spinner.classList.add('hidden'); if (btnText) btnText.innerText = 'Publish Auction';
+  }, 800);
+}
+
+function deleteAuction(id) {
+  if (confirm('Are you sure you want to delete this auction?')) {
+    auctions = auctions.filter(a => a.id !== id); saveAuctionsToStorage(); renderAuctionsUI(); renderAdminAuctionsList(); showToast('Auction Deleted', 'The auction has been removed.');
+  }
+}
+
+function triggerBackendWinnerResolution() {
+  const resolveBtn = document.getElementById('admin-resolve-btn'); const spinner = document.getElementById('admin-resolve-spinner');
+  if (resolveBtn) resolveBtn.disabled = true; if (spinner) spinner.classList.remove('hidden');
+  setTimeout(() => {
+    const now = Date.now(); const expiredAuctions = auctions.filter(a => a.status !== 'ended' && now >= a.endTime);
+    if (expiredAuctions.length === 0) { showToast('Winner Engine', 'No expired auctions to resolve.', true); if (resolveBtn) resolveBtn.disabled = false; if (spinner) spinner.classList.add('hidden'); return; }
+    const allBids = getAllUserBids();
+    expiredAuctions.forEach(auc => {
+      const aucBids = allBids.filter(b => b.auctionId === auc.id); auc.status = 'ended';
+      if (aucBids.length === 0) { auc.winnerName = 'No Winner'; auc.winnerPhone = 'N/A'; auc.winningBid = 'None'; }
+      else {
+        const freq = {}; aucBids.forEach(b => { const amt = parseFloat(b.amount).toFixed(2); freq[amt] = (freq[amt] || 0) + 1; });
+        const uniqueAmounts = Object.keys(freq).filter(amt => freq[amt] === 1).map(Number);
+        if (uniqueAmounts.length === 0) { auc.winnerName = 'No Winner'; auc.winnerPhone = 'N/A'; auc.winningBid = 'None'; }
+        else {
+          const lowestUnique = Math.min(...uniqueAmounts).toFixed(2); auc.winningBid = lowestUnique;
+          const winningBidObj = aucBids.find(b => parseFloat(b.amount).toFixed(2) === lowestUnique);
+          const rawPhone = winningBidObj ? winningBidObj.userPhone : '0900000000'; const maskedPhone = rawPhone.replace(/^(\d{4})\d{3}(\d{3})$/, '$1***$2');
+          auc.winnerPhone = maskedPhone; auc.winnerName = (userPhone && rawPhone === userPhone && userName) ? userName : 'Bidder';
+        }
+      }
+    });
+    saveAuctionsToStorage(); renderAuctionsUI(); renderAdminAuctionsList();
+    showToast('Engine Success', `Resolved ${expiredAuctions.length} expired auction(s).`);
+    if (resolveBtn) resolveBtn.disabled = false; if (spinner) spinner.classList.add('hidden');
+  }, 1200);
+}
+
+function showToast(title, msg, isError = false) {
+  const toast = document.getElementById('toast-notification'); const icon = document.getElementById('toast-icon');
+  document.getElementById('toast-title').innerText = title; document.getElementById('toast-message').innerText = msg;
+  toast.className = `fixed top-6 inset-x-0 mx-auto max-w-sm z-[100] text-white p-4 rounded-2xl shadow-2xl border flex items-center space-x-3 backdrop-blur-md ${isError ? 'bg-red-950/95 border-red-500/50' : 'bg-slate-900/95 border-amber-500/50'}`;
+  icon.className = isError ? 'fa-solid fa-triangle-exclamation text-2xl text-red-400' : 'fa-solid fa-circle-check text-2xl text-amber-500';
+  toast.classList.remove('hidden');
+  if (toastTimeoutId) clearTimeout(toastTimeoutId);
+  toastTimeoutId = setTimeout(() => { dismissToast(); }, 5000);
+}
+
+function dismissToast() { const toast = document.getElementById('toast-notification'); if (toast) toast.classList.add('hidden'); }
+</script>
+</body>
+</html>
